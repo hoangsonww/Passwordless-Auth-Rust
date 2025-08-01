@@ -31,26 +31,29 @@
    - [Core Technologies](#core-technologies)  
    - [Authentication Flows](#authentication-flows)  
    - [Security Primitives](#security-primitives)  
-4. [Quickstart](#quickstart)  
-5. [Installation & Build](#installation--build)  
-6. [Configuration](#configuration)  
-7. [HTTP API Reference & Usage](#http-api-reference--usage)  
+4. [Architecture Diagrams](#architecture-diagrams)  
+   - [High-level architecture overview](#high-level-architecture-overview)  
+   - [Class diagram for core components](#class-diagram-for-core-components)
+5. [Quickstart](#quickstart)  
+6. [Installation & Build](#installation--build)  
+7. [Configuration](#configuration)  
+8. [HTTP API Reference & Usage](#http-api-reference--usage)  
    - [Magic Link Flow](#magic-link-flow)  
    - [TOTP Flow](#totp-flow)  
    - [WebAuthn Flow](#webauthn-flow)  
    - [Token Refresh](#token-refresh)  
-8. [OpenAPI Specification & Client Example](#openapi-specification--client-example)  
-9. [Email Queue Worker](#email-queue-worker)  
-10. [Testing](#testing)  
-11. [Docker & Orchestration](#docker--orchestration)  
-12. [Shell Helpers & Scripts](#shell-helpers--scripts)  
-13. [Example File Layout After Run](#example-file-layout-after-run)  
-14. [Troubleshooting & Common Issues](#troubleshooting--common-issues)  
-15. [Security Considerations](#security-considerations)  
-16. [Extension Points / Developer Notes](#extension-points--developer-notes)  
-17. [Contributing](#contributing)  
-18. [Glossary](#glossary)  
-19. [License](#license)
+9. [OpenAPI Specification & Client Example](#openapi-specification--client-example)  
+10. [Email Queue Worker](#email-queue-worker)  
+11. [Testing](#testing)  
+12. [Docker & Orchestration](#docker--orchestration)  
+13. [Shell Helpers & Scripts](#shell-helpers--scripts)  
+14. [Example File Layout After Run](#example-file-layout-after-run)  
+15. [Troubleshooting & Common Issues](#troubleshooting--common-issues)  
+16. [Security Considerations](#security-considerations)  
+17. [Extension Points / Developer Notes](#extension-points--developer-notes)  
+18. [Contributing](#contributing)  
+19. [Glossary](#glossary)  
+20. [License](#license)
 
 ## Overview
 
@@ -88,6 +91,134 @@
 - **One-time link protection**: Magic link tokens are marked used and expire.  
 - **TOTP windowing**: Small clock skew tolerance while preventing reuse.  
 - **Refresh token revocation**: Stored server-side to allow invalidating sessions.
+
+## Architecture Diagrams
+
+### High-level architecture overview
+
+```mermaid
+flowchart TB
+  subgraph Client/User
+    U[User / Client]
+  end
+
+  subgraph HTTP_API["HTTP API (Axum)"]
+    ReqMagic[POST /request/magic]
+    VerifyMagic[GET /verify/magic?token=...]
+    EnrollTOTP[POST /totp/enroll]
+    VerifyTOTP[POST /totp/verify]
+    WebRegOpt[POST /webauthn/register/options]
+    WebRegComp[POST /webauthn/register/complete]
+    WebLoginOpt[POST /webauthn/login/options]
+    WebLoginComp[POST /webauthn/login/complete]
+    RefreshTok[POST /token/refresh]
+  end
+
+  subgraph Services
+    MagicLinkSvc[MagicLinkService]
+    TOTPsvc[TOTPService]
+    WebAuthnSvc[WebAuthnService]
+    JWTSvc[JWTService]
+    EmailQueue[Email Queue Worker]
+    SMTP[SMTP Provider]
+    SessionStore[Refresh Token Store]
+  end
+
+  subgraph Persistence
+    SQLite[SQLite DB]
+    Users[Users Table]
+    MagicLinks[Magic Link Tokens]
+    TOTPSecrets[TOTP Secrets]
+    WebAuthnCreds[WebAuthn Credentials]
+    RefreshTokens[Refresh Tokens]
+  end
+
+  %% Magic link flow
+  U --> ReqMagic
+  ReqMagic --> MagicLinkSvc
+  MagicLinkSvc --> SQLite
+  MagicLinkSvc --> Users
+  MagicLinkSvc --> MagicLinks
+  MagicLinkSvc --> EmailQueue
+  EmailQueue --> SQLite
+  EmailQueue --> SMTP
+  SMTP --> U
+  U --> VerifyMagic
+  VerifyMagic --> MagicLinkSvc
+  MagicLinkSvc --> MagicLinks
+  MagicLinkSvc --> JWTSvc
+  JWTSvc --> SessionStore
+  JWTSvc --> RefreshTokens
+  JWTSvc --> U
+
+  %% TOTP flow
+  U --> EnrollTOTP
+  EnrollTOTP --> TOTPsvc
+  TOTPsvc --> SQLite
+  TOTPsvc --> Users
+  TOTPsvc --> TOTPSecrets
+  TOTPsvc --> U
+
+  U --> VerifyTOTP
+  VerifyTOTP --> TOTPsvc
+  TOTPsvc --> TOTPSecrets
+  TOTPsvc --> JWTSvc
+  JWTSvc --> SessionStore
+  JWTSvc --> RefreshTokens
+  JWTSvc --> U
+
+  %% WebAuthn registration/login
+  U --> WebRegOpt
+  WebRegOpt --> WebAuthnSvc
+  WebAuthnSvc --> SQLite
+  WebAuthnSvc --> Users
+  WebAuthnSvc --> WebAuthnCreds
+  WebAuthnSvc --> U
+
+  U --> WebRegComp
+  WebRegComp --> WebAuthnSvc
+  WebAuthnSvc --> WebAuthnCreds
+  WebAuthnSvc --> U
+
+  U --> WebLoginOpt
+  WebLoginOpt --> WebAuthnSvc
+  WebAuthnSvc --> SQLite
+  WebAuthnSvc --> Users
+  WebAuthnSvc --> U
+
+  U --> WebLoginComp
+  WebLoginComp --> WebAuthnSvc
+  WebAuthnSvc --> WebAuthnCreds
+  WebAuthnSvc --> JWTSvc
+  JWTSvc --> SessionStore
+  JWTSvc --> RefreshTokens
+  JWTSvc --> U
+
+  %% Refresh token flow
+  U --> RefreshTok
+  RefreshTok --> JWTSvc
+  JWTSvc --> RefreshTokens
+  JWTSvc --> SessionStore
+  JWTSvc --> U
+
+  %% Revocation path
+  subgraph Revocation
+    Revoke[Revoke refresh token]
+    Revoke --> RefreshTokens
+    RefreshTokens --> JWTSvc
+  end
+
+  %% Styling for clarity
+  style MagicLinkSvc fill:#fff2cc,stroke:#d9a441
+  style TOTPsvc fill:#e8d7ff,stroke:#9a6bcb
+  style WebAuthnSvc fill:#f6efd5,stroke:#b59f6e
+  style JWTSvc fill:#d0f0ff,stroke:#0093c4
+  style EmailQueue fill:#fff8e1,stroke:#c19f2f
+  style SMTP fill:#d4f7d4,stroke:#37a24b
+  style SQLite fill:#f0f0f0,stroke:#888888
+```
+
+### Class diagram for core components
 
 ```mermaid
 %% Class diagram for core components
