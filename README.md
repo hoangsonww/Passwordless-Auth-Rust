@@ -449,7 +449,7 @@ Response includes the secret and `otpauth://` URL:
 ```json
 {
   "secret": "...",
-  "otpauth_url": "otpauth://totp/ShadowVault:alice@example.com?secret=..."
+  "otpauth_url": "otpauth://totp/PasswordlessAuth:alice@example.com?secret=..."
 }
 ```
 

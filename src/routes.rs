@@ -155,7 +155,7 @@ async fn totp_enroll(
         return (StatusCode::INTERNAL_SERVER_ERROR, "error").into_response();
     }
 
-    let url = totp::generate_otpauth_url(&secret, &body.email, "ShadowVault");
+    let url = totp::generate_otpauth_url(&secret, &body.email, "PasswordlessAuth");
     let resp = TotpEnrollResp {
         secret,
         otpauth_url: url,

@@ -19,7 +19,7 @@ email_from = "no-reply@example.com"
 # WebAuthn
 webauthn_rp_id = "localhost"
 webauthn_origin = "http://localhost:3000"
-webauthn_rp_name = "ShadowVault Auth"
+webauthn_rp_name = "Passwordless Auth"
 
 # General
 database_path = "auth.db"

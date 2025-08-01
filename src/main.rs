@@ -61,7 +61,7 @@ async fn main() {
     };
 
     let app = router(state.clone())
-        .route("/", get(|| async { "ShadowVault Passwordless Auth Server" }));
+        .route("/", get(|| async { "Passwordless Auth Server" }));
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     info!("listening on {}", addr);

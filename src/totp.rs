@@ -16,7 +16,7 @@ pub fn generate_secret() -> String {
 }
 
 pub fn generate_otpauth_url(secret: &str, user_email: &str, issuer: &str) -> String {
-    // Example: otpauth://totp/ShadowVault:user@example.com?secret=ABCDEF&issuer=ShadowVault&algorithm=SHA1&digits=6&period=30
+    // Example: otpauth://totp/PasswordlessAuth:user@example.com?secret=ABCDEF&issuer=PasswordlessAuth&algorithm=SHA1&digits=6&period=30
     format!(
         "otpauth://totp/{}:{}?secret={}&issuer={}&algorithm=SHA1&digits=6&period=30",
         issuer, user_email, secret, issuer
