@@ -97,146 +97,134 @@
 ### High-level architecture overview
 
 ```mermaid
-flowchart TB
-%% Top actor
-   U[User / Client]
-
-%% Core service nodes
-   MagicLinkSvc[MagicLinkService]
-   TOTPsvc[TOTPService]
-   WebAuthnSvc[WebAuthnService]
-   JWTSvc[JWTService]
-   EmailQueue[Email Queue Worker]
-   SMTP[SMTP Provider]
-
-%% Persistence
-   subgraph Persistence["SQLite Persistence"]
-      direction TB
-      Users[Users]
-      MagicLinks[Magic Link Tokens]
-      TOTPSecrets[TOTP Secrets]
-      WebAuthnCreds[WebAuthn Credentials]
-      RefreshTokens[Refresh Tokens]
-   end
+flowchart TD
+%% Entry
+   User["User / Client"]
+   Choose["Select auth method"]
+   User --> Choose
 
 %% Magic Link Flow
-   subgraph MagicLinkFlow["Magic Link Flow"]
+   subgraph MagicLink["Magic Link Flow"]
       direction TB
-      MLReq[POST /request/magic]
-      Queue[Enqueue Email]
-      EmailSent[Magic Link Email Delivered]
-      VerifyLink[GET /verify/magic?token=...]
-      IssueJWT1[Issue Access+Refresh JWTs]
+      MLRequest["POST /request/magic"]
+      EnsureUserML["Ensure user record"]
+      CreateToken["Generate one-time token"]
+      SaveMLToken["Persist magic link token"]
+      EnqueueEmail["Enqueue email job"]
+      EmailQueueDB["Email queue (SQLite)"]
+      EmailWorker["Email worker picks job"]
+      SendEmail["Send magic link via SMTP"]
+      EmailDelivered["User receives link"]
+      ClickLink["User clicks link"]
+      VerifyToken["Validate token & mark used"]
+      IssueJWT_ML["Issue access + refresh JWTs"]
    end
 
-   U --> MLReq
-   MLReq --> MagicLinkSvc
-   MagicLinkSvc --> Users
-   MagicLinkSvc --> MagicLinks
-   MagicLinkSvc --> Queue
-   Queue --> EmailQueue
-   EmailQueue --> SMTP
-   SMTP --> EmailSent
-   EmailSent --> U
-   U --> VerifyLink
-   VerifyLink --> MagicLinkSvc
-   MagicLinkSvc --> JWTSvc
-   JWTSvc --> RefreshTokens
-   JWTSvc --> IssueJWT1
-   IssueJWT1 --> U
+   Choose --> MLRequest
+   MLRequest --> EnsureUserML
+   EnsureUserML --> CreateToken
+   CreateToken --> SaveMLToken
+   SaveMLToken --> EnqueueEmail
+   EnqueueEmail --> EmailQueueDB
+   EmailQueueDB --> EmailWorker
+   EmailWorker --> SendEmail
+   SendEmail --> EmailDelivered
+   EmailDelivered --> ClickLink
+   ClickLink --> VerifyToken
+   VerifyToken --> IssueJWT_ML
+   IssueJWT_ML --> User
 
 %% TOTP Flow
-   subgraph TOTPFlow["TOTP Flow"]
+   subgraph TOTP["TOTP Flow"]
       direction TB
-      Enroll[POST /totp/enroll]
-      StoreSecret[Store TOTP Secret]
-      VerifyCode[POST /totp/verify]
-      IssueJWT2[Issue Access+Refresh JWTs]
+      TOTPStart["Enroll / Verify TOTP"]
+      EnsureUserTOTP["Ensure user record"]
+      StoreTOTP["Store / lookup TOTP secret"]
+      VerifyTOTP["Validate TOTP code"]
+      IssueJWT_TOTP["Issue access + refresh JWTs"]
    end
 
-   U --> Enroll
-   Enroll --> TOTPsvc
-   TOTPsvc --> Users
-   TOTPsvc --> TOTPSecrets
-   TOTPsvc --> StoreSecret
-   U --> VerifyCode
-   VerifyCode --> TOTPsvc
-   TOTPsvc --> JWTSvc
-   JWTSvc --> RefreshTokens
-   JWTSvc --> IssueJWT2
-   IssueJWT2 --> U
+   Choose --> TOTPStart
+   TOTPStart --> EnsureUserTOTP
+   EnsureUserTOTP --> StoreTOTP
+   StoreTOTP --> VerifyTOTP
+   VerifyTOTP --> IssueJWT_TOTP
+   IssueJWT_TOTP --> User
 
 %% WebAuthn Flow
-   subgraph WebAuthnFlow["WebAuthn Registration & Login"]
+   subgraph WebAuthn["WebAuthn Flow"]
       direction TB
-      RegOptions[POST /webauthn/register/options]
-      CompleteReg[POST /webauthn/register/complete]
-      RegisterCreds[Store Credential]
-      LoginOptions[POST /webauthn/login/options]
-      CompleteLogin[POST /webauthn/login/complete]
-      IssueJWT3[Issue Access+Refresh JWTs]
+      WebRegOptions["POST /webauthn/register/options"]
+      CompleteReg["POST /webauthn/register/complete"]
+      SaveWebCred["Persist WebAuthn credential"]
+      WebLoginOptions["POST /webauthn/login/options"]
+      CompleteLogin["POST /webauthn/login/complete"]
+      IssueJWT_WebAuthn["Issue access + refresh JWTs"]
    end
 
-   U --> RegOptions
-   RegOptions --> WebAuthnSvc
-   WebAuthnSvc --> Users
-   WebAuthnSvc --> WebAuthnCreds
-   U --> CompleteReg
-   CompleteReg --> WebAuthnSvc
-   WebAuthnSvc --> RegisterCreds
+   Choose --> WebRegOptions
+   WebRegOptions --> CompleteReg
+   CompleteReg --> SaveWebCred
+   SaveWebCred --> WebLoginOptions
+   WebLoginOptions --> CompleteLogin
+   CompleteLogin --> IssueJWT_WebAuthn
+   IssueJWT_WebAuthn --> User
 
-   U --> LoginOptions
-   LoginOptions --> WebAuthnSvc
-   WebAuthnSvc --> Users
-   U --> CompleteLogin
-   CompleteLogin --> WebAuthnSvc
-   WebAuthnSvc --> JWTSvc
-   JWTSvc --> RefreshTokens
-   JWTSvc --> IssueJWT3
-   IssueJWT3 --> U
-
-%% Refresh & Revocation
-   subgraph RefreshRevocation["Refresh / Revocation"]
+%% Token Management
+   subgraph Tokens["Refresh / Revocation"]
       direction TB
-      Refresh[POST /token/refresh]
-      NewTokens[New JWTs Issued]
-      Revoke[Revoke Refresh Token]
-      MarkRevoked[Mark Token Revoked]
+      RefreshReq["POST /token/refresh"]
+      ValidateRefresh["Validate refresh token"]
+      IssueJWT_Refresh["Issue new JWTs"]
+      RevokeReq["Revoke refresh token"]
+      MarkRevoked["Mark token revoked"]
    end
 
-   U --> Refresh
-   Refresh --> JWTSvc
-   JWTSvc --> RefreshTokens
-   JWTSvc --> NewTokens
-   NewTokens --> U
+   User --> RefreshReq
+   RefreshReq --> ValidateRefresh
+   ValidateRefresh --> IssueJWT_Refresh
+   IssueJWT_Refresh --> User
 
-   U --> Revoke
-   Revoke --> RefreshTokens
-   RefreshTokens --> MarkRevoked
-   MarkRevoked --> JWTSvc
+   User --> RevokeReq
+   RevokeReq --> MarkRevoked
 
-%% JWT issuance reused
-   IssueJWT1 --> JWTSvc
-   IssueJWT2 --> JWTSvc
+%% Persistence
+   subgraph DB["SQLite Persistence"]
+      direction TB
+      Users["Users"]
+      MagicLinkTokens["Magic Link Tokens"]
+      TOTPSecrets["TOTP Secrets"]
+      WebAuthnCredentials["WebAuthn Credentials"]
+      RefreshTokens["Refresh Tokens"]
+      EmailJobs["Email Queue"]
+   end
 
-%% Data/storage links (explicit)
-   MagicLinkSvc --> MagicLinks
-   TOTPsvc --> TOTPSecrets
-   WebAuthnSvc --> WebAuthnCreds
-   JWTSvc --> RefreshTokens
-   MagicLinkSvc --> Users
-   TOTPsvc --> Users
-   WebAuthnSvc --> Users
+   EnsureUserML --> Users
+   SaveMLToken --> MagicLinkTokens
+   TOTPStart --> Users
+   EnsureUserTOTP --> Users
+   StoreTOTP --> TOTPSecrets
+   CompleteReg --> Users
+   SaveWebCred --> WebAuthnCredentials
+   ValidateRefresh --> RefreshTokens
+   IssueJWT_Refresh --> RefreshTokens
+   EnqueueEmail --> EmailJobs
+   EmailWorker --> EmailJobs
+
+%% SMTP
+   SMTP["SMTP Provider"]
+   SendEmail --> SMTP
+   SMTP --> EmailDelivered
 
 %% Styling
-   style U fill:#e2f0ff,stroke:#005fa3,stroke-width:2px
-   style MagicLinkSvc fill:#fff5e6,stroke:#d98f41
-   style TOTPsvc fill:#f0e6ff,stroke:#9a6bcb
-   style WebAuthnSvc fill:#e6f7ff,stroke:#4091c4
-   style JWTSvc fill:#d0f7d0,stroke:#2d8f2d
-   style EmailQueue fill:#fff8e1,stroke:#d4a017
+   style User fill:#e2f0ff,stroke:#005fa3,stroke-width:2px
+   style Choose fill:#fff3d9,stroke:#d4a017,stroke-width:1px
+   style MagicLink fill:#fff8e1,stroke:#d4a017
+   style TOTP fill:#f0e6ff,stroke:#9a6bcb
+   style WebAuthn fill:#e6f7ff,stroke:#4091c4
+   style Tokens fill:#d0f7d0,stroke:#2d8f2d
+   style DB fill:#f5f5f5,stroke:#888888
    style SMTP fill:#d4f7d4,stroke:#2d8f2d
-   style Persistence fill:#f5f5f5,stroke:#888888,stroke-width:1px
 ```
 
 ### Class diagram for core components
