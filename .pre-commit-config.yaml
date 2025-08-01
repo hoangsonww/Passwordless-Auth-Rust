@@ -1,0 +1,18 @@
+repos:
+  - repo: local
+    hooks:
+      - id: rustfmt
+        name: Rustfmt check
+        entry: cargo fmt -- --check
+        language: system
+        types: [rust]
+      - id: clippy
+        name: Clippy strict
+        entry: bash -c "cargo clippy --all-targets --all-features -- -D warnings"
+        language: system
+        types: [rust]
+      - id: end-of-file-fixer
+        name: Fix end of file
+        entry: pre-commit-hooks.sh end-of-file-fixer
+        language: script
+        stages: [commit]
