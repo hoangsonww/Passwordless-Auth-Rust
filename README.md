@@ -2,6 +2,8 @@
 
 <p>
 <img alt="Rust" src="https://img.shields.io/badge/Rust-language-black?style=for-the-badge&logo=rust&logoColor=white" />
+<img alt="Axum" src="https://img.shields.io/badge/Axum-web%20framework-blue?style=for-the-badge&logo=rust&logoColor=white" />
+<img alt="Cargo" src="https://img.shields.io/badge/Cargo-build%20tool-orange?style=for-the-badge&logo=cargo&logoColor=white" />
 <img alt="JWT" src="https://img.shields.io/badge/JWT-token-yellow?style=for-the-badge&logo=json-web-tokens&logoColor=white" />
 <img alt="WebAuthn" src="https://img.shields.io/badge/WebAuthn-passwordless-blue?style=for-the-badge" />
 <img alt="TOTP" src="https://img.shields.io/badge/TOTP-2FA-purple?style=for-the-badge" />
