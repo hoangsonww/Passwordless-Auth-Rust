@@ -82,6 +82,84 @@
 - **TOTP windowing**: Small clock skew tolerance while preventing reuse.  
 - **Refresh token revocation**: Stored server-side to allow invalidating sessions.
 
+```mermaid
+%% Class diagram for core components
+classDiagram
+    class AuthServer {
+        +Config config
+        +start()
+    }
+    class MagicLinkService {
+        +request_link(email)
+        +verify(token)
+    }
+    class TOTPService {
+        +enroll(email)
+        +verify(email, code)
+    }
+    class WebAuthnService {
+        +begin_registration(email)
+        +complete_registration(pending_id, resp)
+        +begin_login(email)
+        +complete_login(pending_id, resp)
+    }
+    class JWTService {
+        +create_access(user_id)
+        +create_refresh(user_id)
+        +verify(token)
+    }
+    class EmailQueueWorker {
+        +enqueue(to, subject, text, html)
+        +process_due()
+    }
+    class SMTPProvider {
+        +send(to, subject, body)
+    }
+    class SQLiteDB {
+        +execute(query)
+        +query(query)
+    }
+    class User {
+        -id
+        -email
+        -totp_secret
+        -webauthn_credentials
+    }
+    class MagicLinkToken {
+        -token
+        -expires_at
+        -used
+    }
+    class RefreshToken {
+        -token
+        -expires_at
+        -revoked
+    }
+    class WebAuthnCredential {
+        -credential_id
+        -public_key
+        -sign_count
+    }
+
+    AuthServer --> MagicLinkService
+    AuthServer --> TOTPService
+    AuthServer --> WebAuthnService
+    AuthServer --> JWTService
+    AuthServer --> SQLiteDB
+    MagicLinkService --> SQLiteDB
+    MagicLinkService --> EmailQueueWorker
+    EmailQueueWorker --> SMTPProvider
+    TOTPService --> SQLiteDB
+    WebAuthnService --> SQLiteDB
+    JWTService --> SQLiteDB
+    SQLiteDB --> User
+    SQLiteDB --> MagicLinkToken
+    SQLiteDB --> RefreshToken
+    SQLiteDB --> WebAuthnCredential
+    WebAuthnService --> WebAuthnCredential
+    JWTService --> RefreshToken
+```
+
 ## Quickstart
 
 ```sh
