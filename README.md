@@ -13,6 +13,11 @@
 <img alt="Makefile" src="https://img.shields.io/badge/Makefile-build-orange?style=for-the-badge&logo=make&logoColor=white" />
 <img alt="Testing" src="https://img.shields.io/badge/Testing-unit%20%26%20integration-blueviolet?style=for-the-badge&logo=testing&logoColor=white" />
 <img alt="Shell Scripting" src="https://img.shields.io/badge/Shell_Scripting-helpers-yellow?style=for-the-badge&logo=shell&logoColor=white" />
+<img alt="Rustfmt" src="https://img.shields.io/badge/Rustfmt-code%20formatting-lightblue?style=for-the-badge&logo=rust&logoColor=white" />
+<img alt="Clippy" src="https://img.shields.io/badge/Clippy-linting-orange?style=for-the-badge&logo=rust&logoColor=white" />
+<img alt="SQL" src="https://img.shields.io/badge/SQL-queries-blue?style=for-the-badge&logo=sqlite&logoColor=white" />
+<img alt="C" src="https://img.shields.io/badge/C-language-blue?style=for-the-badge&logo=c&logoColor=white" />
+<img alt="C#" src="https://img.shields.io/badge/C%23-language-blue?style=for-the-badge&logo=cplusplus&logoColor=white" />
 <img alt="MIT License" src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge&logo=opensource&logoColor=white" />
 </p>
 
