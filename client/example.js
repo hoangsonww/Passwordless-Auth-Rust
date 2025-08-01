@@ -1,5 +1,5 @@
 // Node.js example using fetch to drive magic link, TOTP, and refresh flows.
-// Run with: node example.js
+// Run with: node example.js from client/ directory.
 
 const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
 
