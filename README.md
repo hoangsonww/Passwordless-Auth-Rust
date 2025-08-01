@@ -215,9 +215,11 @@ flowchart TD
    EmailWorker --> EmailJobs
 
 %% SMTP
-   SMTP["SMTP Provider"]
-   SendEmail --> SMTP
-   SMTP --> EmailDelivered
+   SendEmail --> SMTP["SMTP Provider"]
+   SMTP --> EmailDelivered["User receives link"]
+
+   style SMTP fill:#d4f7d4,stroke:#2d8f2d,color:#000
+   style EmailDelivered color:#000
 
 %% Styling
    style User fill:#e2f0ff,stroke:#005fa3,stroke-width:2px
