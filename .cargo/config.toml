@@ -5,4 +5,4 @@ verbose = true
 incremental = true
 
 [target.'cfg(unix)']
-rustflags = ["-Dwarnings"] # treat all warnings as errors globally if desired
+rustflags = ["-Dwarnings"] # treat all warnings as errors globally
