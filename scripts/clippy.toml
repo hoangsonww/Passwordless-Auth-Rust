@@ -1,0 +1,17 @@
+# Clippy configuration - enable some stricter lint groups, allow known noisy ones, treat certain patterns as errors.
+
+# Enable pedantic and nursery as warnings by default.
+warn = ["clippy::pedantic", "clippy::nursery"]
+
+# Exceptions to reduce noise
+allow = [
+    "clippy::module_name_repetitions",
+    "clippy::missing_errors_doc",
+    "clippy::similar_names"
+]
+
+# Escalate some risky patterns to errors
+deny = [
+    "clippy::unwrap_used",
+    "clippy::expect_used"
+]
