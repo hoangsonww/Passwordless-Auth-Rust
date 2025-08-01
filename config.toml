@@ -1,0 +1,25 @@
+# BELOW ARE EXAMPLE VALUES. REPLACE THEM WITH YOUR ACTUAL CONFIGURATION!!!!!
+
+# JWT
+jwt_secret = "supersecretandlongenoughforhs256"
+access_token_expiry_seconds = 900    # 15 minutes
+refresh_token_expiry_seconds = 604800 # 7 days
+
+# Magic link
+magic_link_expiry_seconds = 600  # 10 minutes
+magic_link_base_url = "http://localhost:3000/verify/magic"
+
+# SMTP (for sending magic links)
+smtp_host = "smtp.example.com"
+smtp_port = 587
+smtp_username = "user@example.com"
+smtp_password = "password"
+email_from = "no-reply@example.com"
+
+# WebAuthn
+webauthn_rp_id = "localhost"
+webauthn_origin = "http://localhost:3000"
+webauthn_rp_name = "ShadowVault Auth"
+
+# General
+database_path = "auth.db"

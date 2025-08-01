@@ -1,0 +1,31 @@
+version: "3.9"
+services:
+  auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: passwordless_auth
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+      - ./migrations:/app/migrations:ro
+      - ./auth_data:/app
+    environment:
+      RUST_LOG: info
+    ports:
+      - "3000:3000"
+    command: ["./target/release/passwordless-auth"]
+
+  email-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: email_worker
+    depends_on:
+      - auth
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+      - ./migrations:/app/migrations:ro
+      - ./auth_data:/app
+    environment:
+      RUST_LOG: info
+    command: ["./target/release/email-worker"]

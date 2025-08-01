@@ -1,0 +1,192 @@
+# openapi.yaml
+openapi: 3.0.3
+info:
+  title: ShadowVault Passwordless Auth API
+  version: "0.1.0"
+servers:
+  - url: http://localhost:3000
+paths:
+  /request/magic:
+    post:
+      summary: Request a magic login link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Accepted (magic link sent)
+  /verify/magic:
+    get:
+      summary: Verify magic link token
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Returns access & refresh tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+  /totp/enroll:
+    post:
+      summary: Enroll TOTP for an email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        "200":
+          description: Returns secret and otpauth URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret:
+                    type: string
+                  otpauth_url:
+                    type: string
+  /totp/verify:
+    post:
+      summary: Verify TOTP code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                code:
+                  type: string
+      responses:
+        "200":
+          description: JWT tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+  /token/refresh:
+    post:
+      summary: Refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        "200":
+          description: New tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+  /webauthn/register/options:
+    post:
+      summary: Begin WebAuthn registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        "200":
+          description: Registration options
+  /webauthn/register/complete:
+    post:
+      summary: Complete WebAuthn registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pending_id:
+                  type: string
+                response:
+                  type: object
+      responses:
+        "200":
+          description: Registered
+  /webauthn/login/options:
+    post:
+      summary: Begin WebAuthn login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        "200":
+          description: Login options
+  /webauthn/login/complete:
+    post:
+      summary: Complete WebAuthn login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pending_id:
+                  type: string
+                response:
+                  type: object
+      responses:
+        "200":
+          description: JWT tokens
+components:
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
