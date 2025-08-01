@@ -103,6 +103,9 @@ flowchart TD
    Choose["Select auth method"]
    User --> Choose
 
+   style User fill:#e2f0ff,stroke:#005fa3,stroke-width:2px,color:#000
+   style Choose fill:#fff3d9,stroke:#d4a017,stroke-width:1px,color:#000
+
 %% Magic Link Flow
    subgraph MagicLink["Magic Link Flow"]
       direction TB
