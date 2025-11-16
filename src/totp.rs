@@ -1,7 +1,7 @@
 use base32::{Alphabet, encode};
-use oath::{totp_custom};
-use rand::{distributions::Alphanumeric, Rng};
+use rand::Rng;
 use thiserror::Error;
+use totp_lite::{totp_custom, Sha1};
 
 #[derive(Debug, Error)]
 pub enum TotpError {
@@ -24,35 +24,31 @@ pub fn generate_otpauth_url(secret: &str, user_email: &str, issuer: &str) -> Str
 }
 
 pub fn verify_code(secret: &str, code: &str) -> Result<(), TotpError> {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    // Get current timestamp
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    // Decode secret from base32
+    let secret_bytes = match base32::decode(Alphabet::RFC4648 { padding: false }, secret) {
+        Some(bytes) => bytes,
+        None => return Err(TotpError::Invalid),
+    };
+
     // time step 30s, 6 digits, SHA1 default
-    let now = oath::totp_raw_now(
-        secret.as_bytes(),
-        6,
-        0,
-        30,
-    );
-    let expected = format!("{:06}", now);
-    if expected == code {
+    let now_code = totp_custom::<Sha1>(30, 6, &secret_bytes, timestamp);
+
+    if format!("{:06}", now_code) == code {
         Ok(())
     } else {
-        // allow +/-1 step for clock skew
-        let prev = oath::totp_custom(
-            secret.as_bytes(),
-            6,
-            0,
-            30,
-            1,
-            time::OffsetDateTime::now_utc().unix_timestamp() - 30,
-        ).unwrap_or(0);
-        let next = oath::totp_custom(
-            secret.as_bytes(),
-            6,
-            0,
-            30,
-            1,
-            time::OffsetDateTime::now_utc().unix_timestamp() + 30,
-        ).unwrap_or(0);
-        if format!("{:06}", prev) == code || format!("{:06}", next) == code {
+        // allow +/-1 step for clock skew (30 seconds)
+        let prev_code = totp_custom::<Sha1>(30, 6, &secret_bytes, timestamp - 30);
+        let next_code = totp_custom::<Sha1>(30, 6, &secret_bytes, timestamp + 30);
+
+        if format!("{:06}", prev_code) == code || format!("{:06}", next_code) == code {
             Ok(())
         } else {
             Err(TotpError::Invalid)

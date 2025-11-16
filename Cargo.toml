@@ -1,24 +1,63 @@
 [package]
 name = "passwordless-auth"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies]
-axum = { version = "0.7", features = ["headers", "json"] }
+# Core web framework
+axum = { version = "0.7", features = ["json", "macros"] }
 tokio = { version = "1.30", features = ["full"] }
+tower = { version = "0.4", features = ["util", "timeout", "load-shed", "limit"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "request-id", "util", "compression-full", "sensitive-headers"] }
+
+# Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_with = "1.17"
-uuid = { version = "1.4", features = ["v4"] }
+serde_with = "3.0"
+toml = "0.8"
+
+# Database
 rusqlite = { version = "0.29", features = ["bundled"] }
+
+# Authentication & Security
+uuid = { version = "1.4", features = ["v4", "serde"] }
 jsonwebtoken = "8.3"
-chrono = { version = "0.4", features = ["serde"] }
 rand = "0.8"
 base32 = "0.4"
-oath = "0.16"
-webauthn-rs = "0.8"
-lettre = { version = "0.11", features = ["builder", "smtp-transport", "serde"] }
-thiserror = "1.0"
-tracing = "0.1"
-tracing_subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+totp-lite = "2.0"
+time = { version = "0.3", features = ["macros", "formatting"] }
+webauthn-rs = "0.5"
 data-encoding = "2.3"
+
+# Email
+lettre = { version = "0.11", features = ["builder", "smtp-transport", "serde"] }
+
+# Date/Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging & Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter", "json"] }
+
+# Metrics & Monitoring
+metrics = "0.23"
+metrics-exporter-prometheus = "0.15"
+
+# Rate Limiting
+governor = "0.6"
+
+# Environment variables
+dotenvy = "0.15"
+
+# HTTP client for webhooks
+reqwest = { version = "0.12", features = ["json"] }
+
+# Validation
+validator = { version = "0.18", features = ["derive"] }
+
+# Regex for patterns
+regex = "1.10"
