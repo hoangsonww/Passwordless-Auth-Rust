@@ -25,6 +25,8 @@ pub struct AppState {
     pub db: Arc<Database>,
     pub emailer: Arc<Emailer>,
     pub webauthn: Arc<WebauthnState>,
+    pub audit: Arc<crate::audit::AuditLogger>,
+    pub webhook: Arc<crate::webhooks::WebhookSender>,
 }
 
 pub fn router(state: AppState) -> Router {

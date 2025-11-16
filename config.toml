@@ -1,25 +1,73 @@
-# BELOW ARE EXAMPLE VALUES. REPLACE THEM WITH YOUR ACTUAL CONFIGURATION!!!!!
+# ═══════════════════════════════════════════════════════════════════════════
+# Passwordless Auth Server - Production Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# ⚠️  SECURITY WARNING: Replace all example values with your actual configuration!
+# ⚠️  NEVER commit secrets to version control. Use environment variables in production.
+# ═══════════════════════════════════════════════════════════════════════════
 
-# JWT
-jwt_secret = "supersecretandlongenoughforhs256"
-access_token_expiry_seconds = 900    # 15 minutes
-refresh_token_expiry_seconds = 604800 # 7 days
+# ───────────────────────────────────────────────────────────────────────────
+# JWT Configuration
+# ───────────────────────────────────────────────────────────────────────────
+jwt_secret = "supersecretandlongenoughforhs256"  # CHANGE THIS! Min 32 chars
+access_token_expiry_seconds = 900                # 15 minutes
+refresh_token_expiry_seconds = 604800            # 7 days
 
-# Magic link
-magic_link_expiry_seconds = 600  # 10 minutes
+# ───────────────────────────────────────────────────────────────────────────
+# Magic Link Configuration
+# ───────────────────────────────────────────────────────────────────────────
+magic_link_expiry_seconds = 600                  # 10 minutes
 magic_link_base_url = "http://localhost:3000/verify/magic"
 
-# SMTP (for sending magic links)
+# ───────────────────────────────────────────────────────────────────────────
+# SMTP Configuration (for sending emails)
+# ───────────────────────────────────────────────────────────────────────────
 smtp_host = "smtp.example.com"
 smtp_port = 587
 smtp_username = "user@example.com"
-smtp_password = "password"
+smtp_password = "password"                       # CHANGE THIS!
 email_from = "no-reply@example.com"
 
-# WebAuthn
-webauthn_rp_id = "localhost"
-webauthn_origin = "http://localhost:3000"
+# ───────────────────────────────────────────────────────────────────────────
+# WebAuthn Configuration (Passkeys / Hardware Keys)
+# ───────────────────────────────────────────────────────────────────────────
+webauthn_rp_id = "localhost"                     # Must match your domain
+webauthn_origin = "http://localhost:3000"        # Must match exact origin
 webauthn_rp_name = "Passwordless Auth"
 
-# General
+# ───────────────────────────────────────────────────────────────────────────
+# Database Configuration
+# ───────────────────────────────────────────────────────────────────────────
 database_path = "auth.db"
+
+# ───────────────────────────────────────────────────────────────────────────
+# Rate Limiting (DDoS Protection)
+# ───────────────────────────────────────────────────────────────────────────
+rate_limit_per_minute = 60                       # Max requests per IP per minute
+email_rate_limit_per_hour = 10                   # Max emails per address per hour
+
+# ───────────────────────────────────────────────────────────────────────────
+# CORS Configuration (Cross-Origin Resource Sharing)
+# ───────────────────────────────────────────────────────────────────────────
+cors_allow_all = false                           # Set true for development only
+cors_allowed_origins = [
+    # "https://yourapp.com",
+    # "https://www.yourapp.com"
+]
+
+# ───────────────────────────────────────────────────────────────────────────
+# Server Configuration
+# ───────────────────────────────────────────────────────────────────────────
+server_host = "0.0.0.0"                          # Listen on all interfaces
+server_port = 3000                               # Server port
+
+# ───────────────────────────────────────────────────────────────────────────
+# Webhook Configuration (Optional)
+# ───────────────────────────────────────────────────────────────────────────
+# webhook_url = "https://yourapp.com/webhooks/auth"
+# webhook_secret = "your-webhook-secret"
+
+# ───────────────────────────────────────────────────────────────────────────
+# Observability (Logging & Metrics)
+# ───────────────────────────────────────────────────────────────────────────
+enable_metrics = true                            # Enable Prometheus metrics
+log_level = "info"                               # debug, info, warn, error
