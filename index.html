@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Passwordless Auth - Self-Hosted Passwordless Authentication Server built with Rust, supporting Magic Links, TOTP, and WebAuthn">
+    <meta name="keywords" content="passwordless, authentication, rust, webauthn, magic link, totp, jwt, self-hosted">
+    <meta name="author" content="Son Nguyen">
+    <title>Passwordless Auth | Self-Hosted Authentication Server</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="packages/styles.css">
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+
+    <!-- Mermaid for Diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- Header & Navigation -->
+    <header class="header">
+        <nav class="nav-container">
+            <a href="#" class="logo">
+                <span class="logo-icon">🔐</span>
+                <span>Passwordless Auth</span>
+            </a>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#overview" class="nav-link">Overview</a></li>
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#architecture" class="nav-link">Architecture</a></li>
+                <li><a href="#quickstart" class="nav-link">Quick Start</a></li>
+                <li><a href="#api" class="nav-link">API</a></li>
+                <li><a href="#documentation" class="nav-link">Docs</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button id="themeToggle" class="theme-toggle" onclick="passwordlessAuth.toggleTheme()" aria-label="Toggle theme">🌙</button>
+                <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>🔐 Passwordless Authentication</h1>
+            <p>Self-hosted, modern authentication server built with Rust. No passwords, no compromises.</p>
+
+            <div class="badges">
+                <span class="badge">🦀 Rust</span>
+                <span class="badge">⚡ Axum Framework</span>
+                <span class="badge">🔑 WebAuthn</span>
+                <span class="badge">📧 Magic Links</span>
+                <span class="badge">🔐 TOTP</span>
+                <span class="badge">🎫 JWT Sessions</span>
+                <span class="badge">🗄️ SQLite</span>
+                <span class="badge">🐳 Docker Ready</span>
+                <span class="badge">📝 MIT License</span>
+            </div>
+
+            <div class="cta-buttons">
+                <a href="#quickstart" class="btn btn-primary">Get Started</a>
+                <a href="#documentation" class="btn btn-secondary">Read Docs</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container">
+
+        <!-- Overview Section -->
+        <section id="overview" class="section">
+            <h2 class="section-title">Overview</h2>
+            <p class="section-subtitle">A modern, secure, and self-hosted passwordless authentication solution</p>
+
+            <div class="info-box info">
+                <div class="info-box-title">💡 What is Passwordless Auth?</div>
+                <p><strong>Passwordless Auth</strong> is a self-hosted identity and authentication server designed for small teams and internal tools. It provides modern passwordless login mechanisms—magic links delivered via email, WebAuthn (passkeys), and TOTP fallback—while issuing JWTs for session management. No third-party identity provider is required; all state is under your control, with revocable short-lived sessions and refresh tokens.</p>
+            </div>
+
+            <h3 class="mt-2">🎯 Goals & Motivation</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🚫</div>
+                    <h3>Eliminate Passwords</h3>
+                    <p>Reduce risk by avoiding traditional passwords in favor of magic links, passkeys, and one-time TOTP codes.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏠</div>
+                    <h3>Self-Hosted Control</h3>
+                    <p>No reliance on external SaaS for auth; all data, tokens, and credentials live under your infrastructure.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✨</div>
+                    <h3>Modern UX</h3>
+                    <p>Support for WebAuthn (biometric or hardware keys), magic link convenience, and TOTP as backup.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure Sessions</h3>
+                    <p>JWT access + refresh tokens with revocation and lifetime policies for maximum security.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📬</div>
+                    <h3>Reliable Delivery</h3>
+                    <p>Email queueing with retries to ensure magic links arrive even under transient SMTP issues.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>High Performance</h3>
+                    <p>Built with Rust for safety, speed, and efficiency. Production-ready from day one.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="section">
+            <h2 class="section-title">Core Features</h2>
+            <p class="section-subtitle">Three powerful authentication methods, one unified system</p>
+
+            <div class="flow-cards">
+                <div class="flow-card">
+                    <div class="flow-number">1</div>
+                    <h3>📧 Magic Link Flow</h3>
+                    <p>Email-based one-time login links with expiration and single-use semantics. Perfect for quick, secure access without memorizing credentials.</p>
+                    <ul style="margin-top: 1rem; color: var(--text-secondary);">
+                        <li>✓ Email-based authentication</li>
+                        <li>✓ One-time use tokens</li>
+                        <li>✓ Configurable expiration</li>
+                        <li>✓ Reliable queue system</li>
+                    </ul>
+                </div>
+
+                <div class="flow-card">
+                    <div class="flow-number">2</div>
+                    <h3>🔐 TOTP Flow</h3>
+                    <p>Time-based one-time passwords for fallback or second factor. Compatible with Google Authenticator, Authy, and other TOTP apps.</p>
+                    <ul style="margin-top: 1rem; color: var(--text-secondary);">
+                        <li>✓ Industry-standard TOTP</li>
+                        <li>✓ QR code enrollment</li>
+                        <li>✓ Clock skew tolerance</li>
+                        <li>✓ Offline capable</li>
+                    </ul>
+                </div>
+
+                <div class="flow-card">
+                    <div class="flow-number">3</div>
+                    <h3>🔑 WebAuthn Flow</h3>
+                    <p>Strong cryptographic passwordless authentication using platform or roaming authenticators. Biometric and hardware key support.</p>
+                    <ul style="margin-top: 1rem; color: var(--text-secondary);">
+                        <li>✓ FIDO2 compliant</li>
+                        <li>✓ Biometric authentication</li>
+                        <li>✓ Hardware key support</li>
+                        <li>✓ Phishing resistant</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 class="mt-2">🔧 Core Technologies</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Technology</th>
+                            <th>Purpose</th>
+                            <th>Benefits</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>🦀 Rust</strong></td>
+                            <td>Implementation language</td>
+                            <td>Memory safety, performance, reliability</td>
+                        </tr>
+                        <tr>
+                            <td><strong>⚡ Axum</strong></td>
+                            <td>HTTP server framework</td>
+                            <td>Fast, ergonomic, type-safe web APIs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🗄️ SQLite</strong></td>
+                            <td>Embedded persistence</td>
+                            <td>Light, portable, zero-config database</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🎫 JWT</strong></td>
+                            <td>Token-based sessions</td>
+                            <td>Stateless, scalable authentication</td>
+                        </tr>
+                        <tr>
+                            <td><strong>📝 OpenAPI</strong></td>
+                            <td>API specification</td>
+                            <td>Auto-generated clients, documentation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🐳 Docker</strong></td>
+                            <td>Containerization</td>
+                            <td>Consistent deployment, easy orchestration</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="section">
+            <h2 class="section-title">Architecture</h2>
+            <p class="section-subtitle">Comprehensive system design with visual flow diagrams</p>
+
+            <h3>🏗️ High-Level Architecture Overview</h3>
+            <div class="diagram-container">
+                <pre class="mermaid">
+flowchart TD
+    User[User / Client]
+    Choose[Select Auth Method]
+    User --> Choose
+
+    subgraph MagicLink[Magic Link Flow]
+        direction TB
+        MLRequest[POST /request/magic]
+        CreateToken[Generate one-time token]
+        EnqueueEmail[Enqueue email job]
+        EmailWorker[Email worker picks job]
+        SendEmail[Send via SMTP]
+        ClickLink[User clicks link]
+        VerifyToken[Validate and mark used]
+        IssueJWT_ML[Issue JWTs]
+    end
+
+    subgraph TOTP[TOTP Flow]
+        direction TB
+        TOTPEnroll[POST /totp/enroll]
+        StoreTOTP[Store TOTP secret]
+        TOTPVerify[POST /totp/verify]
+        ValidateTOTP[Validate code]
+        IssueJWT_TOTP[Issue JWTs]
+    end
+
+    subgraph WebAuthn[WebAuthn Flow]
+        direction TB
+        WebRegOptions[POST /webauthn/register/options]
+        CompleteReg[POST /webauthn/register/complete]
+        SaveCred[Persist credential]
+        WebLoginOptions[POST /webauthn/login/options]
+        CompleteLogin[POST /webauthn/login/complete]
+        IssueJWT_Web[Issue JWTs]
+    end
+
+    subgraph Tokens[Token Management]
+        direction TB
+        RefreshReq[POST /token/refresh]
+        ValidateRefresh[Validate refresh token]
+        IssueNewJWT[Issue new JWTs]
+    end
+
+    subgraph DB[SQLite Database]
+        direction TB
+        Users[Users Table]
+        MagicTokens[Magic Link Tokens]
+        TOTPSecrets[TOTP Secrets]
+        WebCreds[WebAuthn Credentials]
+        RefreshTokens[Refresh Tokens]
+        EmailQueue[Email Queue]
+    end
+
+    Choose --> MLRequest
+    MLRequest --> CreateToken --> EnqueueEmail
+    EnqueueEmail --> EmailQueue
+    EmailQueue --> EmailWorker --> SendEmail
+    SendEmail --> ClickLink --> VerifyToken --> IssueJWT_ML --> User
+
+    Choose --> TOTPEnroll --> StoreTOTP
+    StoreTOTP --> TOTPSecrets
+    TOTPVerify --> ValidateTOTP --> IssueJWT_TOTP --> User
+
+    Choose --> WebRegOptions --> CompleteReg --> SaveCred
+    SaveCred --> WebCreds
+    WebLoginOptions --> CompleteLogin --> IssueJWT_Web --> User
+
+    User --> RefreshReq --> ValidateRefresh
+    ValidateRefresh --> RefreshTokens
+    ValidateRefresh --> IssueNewJWT --> User
+                </pre>
+            </div>
+
+            <h3 class="mt-2">📊 Component Class Diagram</h3>
+            <div class="diagram-container">
+                <pre class="mermaid">
+classDiagram
+    class AuthServer {
+        +Config config
+        +start()
+        +shutdown()
+    }
+
+    class MagicLinkService {
+        +request_link(email)
+        +verify(token)
+        +generate_token()
+    }
+
+    class TOTPService {
+        +enroll(email)
+        +verify(email, code)
+        +generate_secret()
+    }
+
+    class WebAuthnService {
+        +begin_registration(email)
+        +complete_registration(pending_id, resp)
+        +begin_login(email)
+        +complete_login(pending_id, resp)
+    }
+
+    class JWTService {
+        +create_access(user_id)
+        +create_refresh(user_id)
+        +verify(token)
+        +revoke_refresh(token)
+    }
+
+    class EmailQueueWorker {
+        +enqueue(to, subject, text, html)
+        +process_due()
+        +retry_failed()
+    }
+
+    class SMTPProvider {
+        +send(to, subject, body)
+        +configure(host, port, username, password)
+    }
+
+    class SQLiteDB {
+        +execute(query)
+        +query(query)
+        +transaction()
+    }
+
+    class User {
+        -String id
+        -String email
+        -String totp_secret
+        -credentials
+    }
+
+    class MagicLinkToken {
+        -String token
+        -DateTime expires_at
+        -bool used
+        -String user_id
+    }
+
+    class RefreshToken {
+        -String token
+        -DateTime expires_at
+        -bool revoked
+        -String user_id
+    }
+
+    AuthServer --> MagicLinkService
+    AuthServer --> TOTPService
+    AuthServer --> WebAuthnService
+    AuthServer --> JWTService
+    AuthServer --> SQLiteDB
+
+    MagicLinkService --> SQLiteDB
+    MagicLinkService --> EmailQueueWorker
+    EmailQueueWorker --> SMTPProvider
+    EmailQueueWorker --> SQLiteDB
+
+    TOTPService --> SQLiteDB
+    WebAuthnService --> SQLiteDB
+    JWTService --> SQLiteDB
+
+    SQLiteDB --> User
+    SQLiteDB --> MagicLinkToken
+    SQLiteDB --> RefreshToken
+                </pre>
+            </div>
+
+            <h3 class="mt-2">🔄 Authentication Sequence</h3>
+            <div class="diagram-container">
+                <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant C as Client App
+    participant S as Auth Server
+    participant DB as Database
+    participant SMTP as SMTP Server
+
+    Note over U,SMTP: Magic Link Authentication Flow
+
+    U->>C: Enter email
+    C->>S: POST /request/magic
+    S->>DB: Create magic token
+    S->>DB: Enqueue email
+    S-->>C: 200 OK silent
+
+    loop Email Worker
+        S->>DB: Fetch pending emails
+        S->>SMTP: Send magic link
+        SMTP-->>U: Email delivered
+    end
+
+    U->>C: Click magic link
+    C->>S: GET /verify/magic
+    S->>DB: Validate token
+    S->>DB: Mark token as used
+    S->>DB: Store refresh token
+    S-->>C: Return tokens
+    C->>C: Store tokens
+
+    Note over U,SMTP: Subsequent Requests
+
+    C->>S: API request with access token
+    S->>S: Verify JWT
+    S-->>C: Protected resource
+
+    Note over U,SMTP: Token Refresh
+
+    C->>S: POST /token/refresh
+    S->>DB: Validate refresh token
+    S->>DB: Create new refresh token
+    S-->>C: Return new tokens
+                </pre>
+            </div>
+        </section>
+
+        <!-- Quick Start Section -->
+        <section id="quickstart" class="section">
+            <h2 class="section-title">Quick Start</h2>
+            <p class="section-subtitle">Get up and running in minutes</p>
+
+            <div class="info-box success">
+                <div class="info-box-title">✅ Prerequisites</div>
+                <ul>
+                    <li>Rust toolchain (install via <a href="https://rustup.rs" target="_blank">rustup</a>)</li>
+                    <li>Cargo (included with Rust)</li>
+                    <li>Make (optional, for convenience commands)</li>
+                    <li>Docker & Docker Compose (optional, for containerized deployment)</li>
+                </ul>
+            </div>
+
+            <h3 class="mt-2">📥 Installation</h3>
+            <div class="code-section">
+                <div class="code-header">
+                    <span class="code-label">bash</span>
+                    <button class="copy-btn">📋 Copy</button>
+                </div>
+                <pre><code># Clone the repository
+git clone https://github.com/yourusername/passwordless-auth.git
+cd passwordless-auth
+
+# Build the project
+make build
+
+# Or build manually
+cargo build --release</code></pre>
+            </div>
+
+            <h3 class="mt-2">⚙️ Configuration</h3>
+            <p>Edit <span class="inline-code">config.toml</span> with your settings:</p>
+            <div class="code-section">
+                <div class="code-header">
+                    <span class="code-label">config.toml</span>
+                    <button class="copy-btn">📋 Copy</button>
+                </div>
+                <pre><code># JWT Configuration
+jwt_secret = "your-super-secret-key-here-min-32-chars"
+access_token_expiry_seconds = 900      # 15 minutes
+refresh_token_expiry_seconds = 604800  # 7 days
+
+# Magic Link Settings
+magic_link_expiry_seconds = 600
+magic_link_base_url = "http://localhost:3000/verify/magic"
+
+# SMTP Configuration
+smtp_host = "smtp.example.com"
+smtp_port = 587
+smtp_username = "your-email@example.com"
+smtp_password = "your-smtp-password"
+email_from = "no-reply@example.com"
+
+# WebAuthn Settings
+webauthn_rp_id = "localhost"
+webauthn_origin = "http://localhost:3000"
+webauthn_rp_name = "Passwordless Auth"
+
+# Database
+database_path = "auth.db"</code></pre>
+            </div>
+
+            <h3 class="mt-2">🚀 Running the Server</h3>
+            <div class="code-section">
+                <div class="code-header">
+                    <span class="code-label">bash</span>
+                    <button class="copy-btn">📋 Copy</button>
+                </div>
+                <pre><code># Start the auth server
+./target/release/passwordless-auth
+
+# In another terminal, start the email worker
+./target/release/email-worker
+
+# Or use Docker Compose
+docker-compose up --build</code></pre>
+            </div>
+
+            <h3 class="mt-2">🧪 Testing the API</h3>
+            <div class="code-section">
+                <div class="code-header">
+                    <span class="code-label">bash</span>
+                    <button class="copy-btn">📋 Copy</button>
+                </div>
+                <pre><code># Request a magic link
+curl -X POST http://localhost:3000/request/magic \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@example.com"}'
+
+# Verify the magic link (get token from email or database)
+curl "http://localhost:3000/verify/magic?token=YOUR_TOKEN_HERE"
+
+# Response: {"access_token":"...", "refresh_token":"..."}
+
+# Refresh tokens
+curl -X POST http://localhost:3000/token/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token":"YOUR_REFRESH_TOKEN"}'</code></pre>
+            </div>
+        </section>
+
+        <!-- API Documentation Section -->
+        <section id="api" class="section">
+            <h2 class="section-title">API Reference</h2>
+            <p class="section-subtitle">Complete HTTP API documentation</p>
+
+            <h3>📧 Magic Link Endpoints</h3>
+
+            <div class="api-endpoint">
+                <div>
+                    <span class="api-method method-post">POST</span>
+                    <span class="api-path">/request/magic</span>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Description:</strong> Request a magic login link to be sent via email</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "email": "alice@example.com"
+}</code></pre>
+                </div>
+                <p><strong>Response:</strong> <span class="inline-code">200 OK</span> (always succeeds silently to prevent email enumeration)</p>
+            </div>
+
+            <div class="api-endpoint">
+                <div>
+                    <span class="api-method method-get">GET</span>
+                    <span class="api-path">/verify/magic</span>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Description:</strong> Verify a magic link token and receive JWTs</p>
+                <p><strong>Query Parameters:</strong></p>
+                <ul class="param-list">
+                    <li><span class="inline-code">token</span> (required): The magic link token from email</li>
+                </ul>
+                <p><strong>Response:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}</code></pre>
+                </div>
+            </div>
+
+            <h3 class="mt-2">🔐 TOTP Endpoints</h3>
+
+            <div class="api-endpoint">
+                <div>
+                    <span class="api-method method-post">POST</span>
+                    <span class="api-path">/totp/enroll</span>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Description:</strong> Enroll a TOTP authenticator for an email</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "email": "alice@example.com"
+}</code></pre>
+                </div>
+                <p><strong>Response:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "secret": "JBSWY3DPEHPK3PXP",
+  "otpauth_url": "otpauth://totp/PasswordlessAuth:alice@example.com?secret=JBSWY3DPEHPK3PXP&issuer=PasswordlessAuth"
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <div>
+                    <span class="api-method method-post">POST</span>
+                    <span class="api-path">/totp/verify</span>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Description:</strong> Verify a TOTP code and receive JWTs</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "email": "alice@example.com",
+  "code": "123456"
+}</code></pre>
+                </div>
+                <p><strong>Response:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}</code></pre>
+                </div>
+            </div>
+
+            <h3 class="mt-2">🔑 WebAuthn Endpoints</h3>
+
+            <div class="api-endpoint">
+                <div>
+                    <span class="api-method method-post">POST</span>
+                    <span class="api-path">/webauthn/register/options</span>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Description:</strong> Get WebAuthn registration options</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "email": "alice@example.com"
+}</code></pre>
+                </div>
+                <p><strong>Response:</strong> WebAuthn PublicKeyCredentialCreationOptions</p>
+            </div>
+
+            <div class="api-endpoint">
+                <div>
+                    <span class="api-method method-post">POST</span>
+                    <span class="api-path">/webauthn/register/complete</span>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Description:</strong> Complete WebAuthn registration</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "pending_id": "uuid-from-options-response",
+  "response": { /* PublicKeyCredential from browser */ }
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <div>
+                    <span class="api-method method-post">POST</span>
+                    <span class="api-path">/webauthn/login/options</span>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Description:</strong> Get WebAuthn login options</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "email": "alice@example.com"
+}</code></pre>
+                </div>
+                <p><strong>Response:</strong> WebAuthn PublicKeyCredentialRequestOptions</p>
+            </div>
+
+            <div class="api-endpoint">
+                <div>
+                    <span class="api-method method-post">POST</span>
+                    <span class="api-path">/webauthn/login/complete</span>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Description:</strong> Complete WebAuthn login and receive JWTs</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "pending_id": "uuid-from-options-response",
+  "response": { /* PublicKeyCredential from browser */ }
+}</code></pre>
+                </div>
+                <p><strong>Response:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}</code></pre>
+                </div>
+            </div>
+
+            <h3 class="mt-2">🎫 Token Management</h3>
+
+            <div class="api-endpoint">
+                <div>
+                    <span class="api-method method-post">POST</span>
+                    <span class="api-path">/token/refresh</span>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Description:</strong> Refresh access token using refresh token</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}</code></pre>
+                </div>
+                <p><strong>Response:</strong></p>
+                <div class="code-section">
+                    <pre><code>{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Documentation Section -->
+        <section id="documentation" class="section">
+            <h2 class="section-title">Documentation</h2>
+            <p class="section-subtitle">Comprehensive guides and references</p>
+
+            <h3>📚 Key Concepts</h3>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>🔐 Security Primitives</h4>
+                    <ul>
+                        <li><strong>HMAC & Signed Tokens:</strong> JWTs are signed using HS256 with a secret key to prevent forgery</li>
+                        <li><strong>Challenge/Response:</strong> WebAuthn uses cryptographic challenges to prove credential possession</li>
+                        <li><strong>One-time Protection:</strong> Magic link tokens are marked as used and expire after single use</li>
+                        <li><strong>TOTP Windowing:</strong> Small clock skew tolerance while preventing code reuse</li>
+                        <li><strong>Token Revocation:</strong> Refresh tokens stored server-side for immediate revocation capability</li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>📧 Email Queue Worker</h4>
+                    <p>To improve reliability of magic link delivery, emails are enqueued in <span class="inline-code">email_queue</span> and retried with exponential backoff:</p>
+                    <ul>
+                        <li>Fetches due pending emails from queue</li>
+                        <li>Marks emails as "sending" to prevent duplicate delivery</li>
+                        <li>Attempts delivery via SMTP</li>
+                        <li>On failure: updates <span class="inline-code">next_try_at</span> with exponential backoff</li>
+                        <li>On success: marks email as sent</li>
+                    </ul>
+                    <p>This design makes the system resilient to transient SMTP issues.</p>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>🧪 Testing</h4>
+                    <p><strong>Unit Tests:</strong> Cover JWT creation/verification, magic link lifecycle, TOTP generation/validation, and refresh token management.</p>
+                    <p><strong>Integration Tests:</strong> Simulate full authentication flows including magic link end-to-end, token refresh, TOTP enrollment/verification, and WebAuthn option retrieval.</p>
+                    <div class="code-section">
+                        <div class="code-header">
+                            <span class="code-label">bash</span>
+                            <button class="copy-btn">📋 Copy</button>
+                        </div>
+                        <pre><code># Run all tests
+make test
+
+# Or directly with cargo
+cargo test
+
+# Run specific test
+cargo test test_magic_link_flow</code></pre>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>🐳 Docker Deployment</h4>
+                    <p>Deploy using Docker Compose for production-ready setup:</p>
+                    <div class="code-section">
+                        <div class="code-header">
+                            <span class="code-label">bash</span>
+                            <button class="copy-btn">📋 Copy</button>
+                        </div>
+                        <pre><code># Build Docker image
+make docker-build
+
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down</code></pre>
+                    </div>
+                    <p><strong>Services:</strong></p>
+                    <ul>
+                        <li><span class="inline-code">auth</span>: Primary authentication server (port 3000)</li>
+                        <li><span class="inline-code">email-worker</span>: Background email queue processor</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 class="mt-2">🔒 Security Considerations</h3>
+            <div class="info-box warning">
+                <div class="info-box-title">⚠️ Production Security Checklist</div>
+                <ul>
+                    <li><strong>Secret Management:</strong> Use strong, random <span class="inline-code">jwt_secret</span> (min 32 chars). Store in environment variables or secrets manager.</li>
+                    <li><strong>Token Expiry:</strong> Keep access tokens short-lived (15 min). Refresh tokens should be revocable.</li>
+                    <li><strong>TLS/HTTPS:</strong> Always deploy behind TLS termination (Caddy, Nginx, or cloud load balancer).</li>
+                    <li><strong>Rate Limiting:</strong> Implement per-IP/email throttling to prevent abuse and enumeration.</li>
+                    <li><strong>Email Security:</strong> Use SPF, DKIM, and DMARC for email authentication.</li>
+                    <li><strong>Database Backups:</strong> Regular backups of SQLite database containing users and tokens.</li>
+                    <li><strong>Monitoring:</strong> Log authentication attempts, failures, and token issuance for audit trails.</li>
+                    <li><strong>WebAuthn Origin:</strong> Ensure <span class="inline-code">webauthn_origin</span> matches your actual domain.</li>
+                </ul>
+            </div>
+
+            <h3 class="mt-2">🛠️ Troubleshooting</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Issue</th>
+                            <th>Possible Cause</th>
+                            <th>Solution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Magic link email not arriving</td>
+                            <td>SMTP misconfiguration</td>
+                            <td>Check <span class="inline-code">email_queue</span> table, verify SMTP credentials, run email-worker</td>
+                        </tr>
+                        <tr>
+                            <td>Token expired error</td>
+                            <td>Token lifetime passed</td>
+                            <td>Request new magic link or use refresh token</td>
+                        </tr>
+                        <tr>
+                            <td>JWT verification fails</td>
+                            <td>Wrong secret or malformed token</td>
+                            <td>Verify <span class="inline-code">jwt_secret</span> matches across all instances</td>
+                        </tr>
+                        <tr>
+                            <td>WebAuthn errors</td>
+                            <td>Origin/RP mismatch</td>
+                            <td>Ensure <span class="inline-code">webauthn_origin</span> and <span class="inline-code">rp_id</span> match client domain</td>
+                        </tr>
+                        <tr>
+                            <td>Database locked</td>
+                            <td>Concurrent SQLite access</td>
+                            <td>WAL mode enabled by default; avoid long transactions</td>
+                        </tr>
+                        <tr>
+                            <td>Refresh token invalid</td>
+                            <td>Token revoked or expired</td>
+                            <td>Re-authenticate via magic link, TOTP, or WebAuthn</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="mt-2">🚀 Extension Points</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3>Backend Swap</h3>
+                    <p>Replace SQLite with PostgreSQL or MySQL for larger deployments and better concurrency.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Session Management</h3>
+                    <p>Add endpoints to list active sessions and revoke specific refresh tokens per user.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⏱️</div>
+                    <h3>Rate Limiting</h3>
+                    <p>Implement per-IP and per-email throttling using middleware or external service.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📧</div>
+                    <h3>Rich Email Templates</h3>
+                    <p>Upgrade to Handlebars or Tera templating for branded HTML emails.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Metrics & Monitoring</h3>
+                    <p>Export Prometheus metrics for auth success/failure, queue depth, and token issuance.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Admin Dashboard</h3>
+                    <p>Build a web UI to manage users, view challenges, and revoke tokens.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contributing Section -->
+        <section id="contributing" class="section">
+            <h2 class="section-title">Contributing</h2>
+            <p class="section-subtitle">Help make Passwordless Auth even better</p>
+
+            <div class="info-box info">
+                <div class="info-box-title">🤝 How to Contribute</div>
+                <ol style="margin-left: 1.5rem;">
+                    <li>Fork the repository on GitHub</li>
+                    <li>Create a feature branch: <span class="inline-code">git checkout -b feature/your-feature</span></li>
+                    <li>Make your changes and add tests</li>
+                    <li>Ensure all tests pass: <span class="inline-code">cargo test</span></li>
+                    <li>Format code: <span class="inline-code">cargo fmt</span></li>
+                    <li>Run clippy: <span class="inline-code">cargo clippy</span></li>
+                    <li>Commit your changes with clear messages</li>
+                    <li>Push to your fork and submit a pull request</li>
+                </ol>
+            </div>
+
+            <h3 class="mt-2">💎 High-Value Contributions</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 0.5rem 0;">✅ Pluggable storage backends (Redis, PostgreSQL)</li>
+                <li style="padding: 0.5rem 0;">✅ WebAuthn client-side helper library</li>
+                <li style="padding: 0.5rem 0;">✅ Alternative delivery methods (SMS, webhook)</li>
+                <li style="padding: 0.5rem 0;">✅ Admin UI for user and session management</li>
+                <li style="padding: 0.5rem 0;">✅ Performance optimizations and benchmarks</li>
+                <li style="padding: 0.5rem 0;">✅ Additional authentication methods</li>
+                <li style="padding: 0.5rem 0;">✅ Improved documentation and examples</li>
+            </ul>
+        </section>
+
+        <!-- Glossary Section -->
+        <section id="glossary" class="section">
+            <h2 class="section-title">Glossary</h2>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Term</th>
+                            <th>Definition</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Magic Link</strong></td>
+                            <td>One-time login URL sent by email that expires after use</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TOTP</strong></td>
+                            <td>Time-based One-Time Password, standard for 2FA authenticator apps</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WebAuthn</strong></td>
+                            <td>Browser-native cryptographic authentication standard (FIDO2)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>JWT</strong></td>
+                            <td>JSON Web Token, signed token representing session identity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Access Token</strong></td>
+                            <td>Short-lived JWT for API access (typically 15 minutes)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Refresh Token</strong></td>
+                            <td>Longer-lived token for obtaining new access tokens (typically 7 days)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email Queue</strong></td>
+                            <td>Persistent queue with retry mechanism for reliable email delivery</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RP (Relying Party)</strong></td>
+                            <td>The service (this server) in WebAuthn terminology</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Passkey</strong></td>
+                            <td>User-friendly term for WebAuthn credentials (e.g., fingerprint, Face ID)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Passwordless Auth</h3>
+                <p style="color: var(--text-secondary);">Modern, secure, self-hosted authentication built with Rust.</p>
+                <p style="margin-top: 1rem;">
+                    <strong>License:</strong> MIT<br>
+                    <strong>Author:</strong> Son Nguyen<br>
+                    <strong>Year:</strong> 2025
+                </p>
+            </div>
+
+            <div class="footer-section">
+                <h3>Documentation</h3>
+                <ul class="footer-links">
+                    <li><a href="#quickstart">Quick Start Guide</a></li>
+                    <li><a href="#api">API Reference</a></li>
+                    <li><a href="#architecture">Architecture</a></li>
+                    <li><a href="#documentation">Full Documentation</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Resources</h3>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/yourusername/passwordless-auth" target="_blank">GitHub Repository</a></li>
+                    <li><a href="https://docs.rs" target="_blank">Rust Documentation</a></li>
+                    <li><a href="https://webauthn.io" target="_blank">WebAuthn Guide</a></li>
+                    <li><a href="https://jwt.io" target="_blank">JWT.io</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Community</h3>
+                <ul class="footer-links">
+                    <li><a href="#contributing">Contributing</a></li>
+                    <li><a href="https://github.com/yourusername/passwordless-auth/issues" target="_blank">Report Issues</a></li>
+                    <li><a href="https://github.com/yourusername/passwordless-auth/discussions" target="_blank">Discussions</a></li>
+                    <li><a href="mailto:contact@example.com">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 2025 Passwordless Auth. Released under the MIT License.</p>
+            <p style="margin-top: 0.5rem;">Built with 🦀 Rust, ⚡ Axum, and ❤️ by <a href="https://github.com/hoangsonww" target="_blank" class="link">Son Nguyen</a>.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="packages/script.js"></script>
+</body>
+</html>
