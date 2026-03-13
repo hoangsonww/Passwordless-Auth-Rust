@@ -1,0 +1,3 @@
+SOLID refactor marker
+repo: Passwordless-Auth-Rust
+timestamp: 2026-03-13T08:38:40Z
